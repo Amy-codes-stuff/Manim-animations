@@ -10,3 +10,11 @@ class ShapeExample(Scene):
         self.play(Transform(circle, square))
         self.wait(1)
         self.play(FadeOut(circle))
+
+
+class StyledText(Scene):
+    def construct(self):
+        text = Text("Styled Text", font_size=72, color=YELLOW)
+        text.move_to(UP)  # move the text upward
+        self.play(FadeIn(text))
+        self.wait(1)
