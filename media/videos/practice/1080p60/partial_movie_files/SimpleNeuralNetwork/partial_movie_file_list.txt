@@ -1,2 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/practice/1080p60/partial_movie_files/SimpleNeuralNetwork/3977891868_1734327179_1634970969.mp4'
