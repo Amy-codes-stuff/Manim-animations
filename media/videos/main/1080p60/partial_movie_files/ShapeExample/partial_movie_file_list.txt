@@ -1,6 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/main/1080p60/partial_movie_files/ShapeExample/3977891868_1898478303_223132457.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/main/1080p60/partial_movie_files/ShapeExample/2852726489_1839128356_3712042578.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/main/1080p60/partial_movie_files/ShapeExample/2852726489_806678849_578674303.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/main/1080p60/partial_movie_files/ShapeExample/2852726489_1839128356_1116141433.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/main/1080p60/partial_movie_files/ShapeExample/2852726489_2774011005_2373750003.mp4'
