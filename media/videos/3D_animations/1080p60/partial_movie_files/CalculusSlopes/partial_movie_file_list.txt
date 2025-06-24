@@ -1,5 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/3D_animations/1080p60/partial_movie_files/CalculusSlopes/3977891868_2541470380_2358810818.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/3D_animations/1080p60/partial_movie_files/CalculusSlopes/2852726489_3934778759_15429574.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/3D_animations/1080p60/partial_movie_files/CalculusSlopes/2852726489_3132424521_1930132631.mp4'
-file 'file:C:/Users/tiwar.LAPTOP-HENDOA2O/manimations/media/videos/3D_animations/1080p60/partial_movie_files/CalculusSlopes/2852726489_1754310298_567450268.mp4'
