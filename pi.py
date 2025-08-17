@@ -1,546 +1,586 @@
 from manim import *
+import math
 import random
-import math # Import math for math.sqrt and math.pi
+import numpy as np
 
-# Define custom colors for consistent use
-GREEN_SCREEN = ManimColor("#00FF00")
-ORANGE_COLOR = ManimColor("#FFA500") # Custom orange for true Pi
+# Configuration - Apply once for the whole video
+config.pixel_height = 1920
+config.pixel_width = 1080
+config.frame_height = 16.0
+config.frame_width = 9.0
 config.background_color = WHITE
 
-# --- Scene 1: Introduction to Pi and the Problem ---
-class IntroductionScene(Scene):
-    def construct(self):
-        title = Text("Estimating Pi (π)", font_size=50, color = BLACK).to_edge(UP)
-        self.play(Write(title), run_time = 0.5)
-        self.wait(0.5)
+# Re-define common colors
+dark_green = ManimColor('#006400')
+dark_green1 = ManimColor('#80EF80') # From piestimationverticle.py
+dark_red = ManimColor('#C4150C')
+DARK_BLUE = ManimColor("#00008B") # Defined missing color in previous snippets
 
-        circle = Circle(radius=2, color=BLUE)
+class FullAnimationFlow(Scene):
+    # Define a small epsilon for floating-point comparisons, accessible throughout the combined scene
+    EPSILON = 1e-9
+
+    def construct(self):
+        # --- Start Scene 1: Introduction (from intro.py) ---
+        # Title (Optional)
+        title = Text("What is \u03c0?", font_size=60, color=BLUE).to_edge(UP)
+        self.play(Write(title))
+        self.wait(0.5)
+        self.play(FadeOut(title))
+
+        # Step 1: Draw the circle
+        circle = Circle(radius=2, color=BLACK )
         diameter_line = Line(circle.get_left(), circle.get_right(), color=RED)
-        diameter_label = Tex("Diameter (d)", font_size=30, ).next_to(diameter_line, DOWN)
+        diameter_label = Tex("Diameter", font_size=30, color=BLACK).next_to(diameter_line, DOWN)
 
-        self.play(Create(circle))
-        self.play(Create(diameter_line), Write(diameter_label))
-        self.wait(2)
+        self.play(Create(circle), Create(diameter_line), Write(diameter_label))
+        self.wait(1)
 
-        circumference_label = Tex("Circumference (C)", font_size=30).next_to(circle, RIGHT, buff=0.5)
-        self.play(Write(circumference_label))
-
-        # Simulate unwrapping the circumference
-        unwrapped_circumference = Line(ORIGIN, RIGHT * 2 * math.pi, color=GREEN, stroke_width=7).align_to(diameter_line, LEFT)
-        unwrapped_circumference.shift(DOWN * 1.5)
-        unwrapped_circumference_label = Tex("$C = \\pi d$", font_size=40).next_to(unwrapped_circumference, UP)
+        # Step 3: Unwrap circumference
+        unwrapped_circumference = Line(ORIGIN, RIGHT * 2 * math.pi, color=TEAL, stroke_width=7)
+        unwrapped_circumference.move_to(ORIGIN).shift(DOWN * 2.5)
+        circum_text = Text("Circumference", font_size=34, color=BLACK).next_to(unwrapped_circumference, DOWN, buff=0.2)
 
         self.play(
-            FadeOut(circle, diameter_line, diameter_label, circumference_label),
-            ReplacementTransform(circle.copy().set_opacity(0), unwrapped_circumference), # Placeholder transform
-            Write(unwrapped_circumference_label)
+            ReplacementTransform(circle.copy().set_opacity(0), unwrapped_circumference),
+            Write(circum_text),
+            run_time=1
         )
+        self.wait(0.25)
+        pi_intro = MathTex(r"\text{This distance is called the circumference...}", font_size=36, color=BLACK)
+        pi_intro.next_to(circle, UP * 5)
+
+        pi_hint = MathTex(r"\text{And it's closely tied to a special number: } \pi", font_size=36, color=BLUE_D)
+        pi_hint.next_to(pi_intro, DOWN, buff=0.5)
+
+
+        self.wait(0.25)
+        self.play(Write(pi_intro))
+        self.play(Write(pi_hint))
+        # Remove original objects
+        self.play(FadeOut(circle, diameter_line, diameter_label, pi_hint, pi_intro))
+        self.wait(0.25)
+
+        # Move unwrapped line to center
+        cir_group = VGroup(unwrapped_circumference, circum_text)
+        self.play(cir_group.animate.move_to(ORIGIN))
+
+        # Step 4: Show formula
+        formula = MathTex("C = \\pi d", font_size=50, color=BLACK)
+        formula.next_to(unwrapped_circumference, UP, buff=0.5)
+        self.play(Write(formula))
+        self.wait(0.5)
+
+        # Show value of π
+        pi_value_intro = MathTex(r"\pi \approx 3.14159265", font_size=40, color=RED) # Renamed to avoid conflict
+        pi_value_intro.next_to(circum_text, DOWN, buff=0.4)
+        self.play(Write(pi_value_intro))
+        self.wait(0.5)
+
+        # Transition to next part
+        self.play(FadeOut(unwrapped_circumference, formula, circum_text))
+        self.play(pi_value_intro.animate.move_to(ORIGIN).scale(2))
+        self.wait(3)
+        self.play(FadeOut(pi_value_intro)) # Ensure all objects from this section are faded out
+        self.wait(1) # Pause between sections
+
+        # --- Start Scene 2: NestedSquareProbabilityScene (from gpexamples.py) ---
+        outer_side = 4.0
+        inner_side = outer_side / 2
+
+        # Step 1: Outer and Inner squares
+        outer_square = Square(side_length=outer_side, color=BLACK)
+        inner_square = Square(side_length=inner_side, color=BLUE, fill_opacity=0.3).move_to(outer_square.get_center())
+
+        # Step 2: Labels
+        outer_label = MathTex(f"{outer_side}", color=BLACK, font_size=28).next_to(outer_square, RIGHT)
+        inner_label = MathTex(f"{inner_side}", color=BLACK, font_size=28).next_to(inner_square, LEFT)
+
+        self.play(Create(outer_square), Create(inner_square), Write(outer_label), Write(inner_label))
         self.wait(1)
 
-        pi_approx = Text(f"{math.pi:.8f}", font_size=40, color=YELLOW).next_to(unwrapped_circumference_label, DOWN, buff=0.5)
-        self.play(Write(pi_approx))
-        self.wait(1.5)
-
-        question = Text("How can we estimate this infinite value?", font_size=35).next_to(pi_approx, DOWN, buff=1)
-        self.play(Write(question))
-        self.wait(1.5)
-        self.play(FadeOut(question))
-
-        monte_carlo_intro = Text("Introducing the Monte Carlo Method!", font_size=45, color=GREEN_SCREEN).to_edge(DOWN)
-        self.play(Write(monte_carlo_intro))
-        self.wait(2)
-
-        self.play(FadeOut(*self.mobjects))
-
-# --- Scene 2: Setting the Stage - The Square and the Circle ---
-class SetupScene(Scene):
-    def construct(self):
-        square_side = 4
-        circle_radius = square_side / 2
-
-        square = Square(side_length=square_side, color=DARK_BLUE, stroke_width=3)
-        square_label = Tex("Square", font_size=35,color=BLACK).next_to(square, UP)
-
-
-        circle = Circle(radius=circle_radius, color=RED, stroke_width=3)
-        circle_label = Tex("Inscribed Circle", font_size=35,color = BLACK).next_to(circle, DOWN)
-        self.play(Create(circle), Write(circle_label),Create(square), Write(square_label))
-
-        radius_line = Line(circle.get_center(), circle.get_right(), color=RED, stroke_width=2)
-        radius_label = MathTex("r", font_size=35, color  = BLACK).next_to(radius_line, UP)
-
-        side_line_left = Line(square.get_corner(UL), square.get_corner(DL), color=GREEN, stroke_width=2)
-        side_label_left = MathTex("2r", font_size=35, color = BLACK).next_to(side_line_left, LEFT)
-        self.play(Create(radius_line), Write(radius_label),Create(side_line_left), Write(side_label_left))
-
-        group_objects = VGroup(square, circle, radius_line, radius_label, side_line_left, side_label_left, square_label, circle_label)
-        self.play(group_objects.animate.shift(LEFT * 3))
-        self.wait(0.3)
-
-        text_area_intro = Text("Let's look at their areas...", font_size=40, color = BLACK).next_to(group_objects, RIGHT, buff=1)
-        self.play(Write(text_area_intro), run_time = 0.5)
-        self.play(FadeOut(text_area_intro))
-
-        area_circle_formula = MathTex(
-            "A_{\\text{circle}} = \\pi r^2",
-            font_size=45, color = BLACK
-        ).next_to(group_objects, RIGHT, buff=1, aligned_edge=UP)
-
-        area_square_formula = MathTex(
-            "A_{\\text{square}} = (2r)^2 = 4r^2",
-            font_size=45, color = BLACK
-        ).next_to(area_circle_formula, DOWN, aligned_edge=LEFT)
-        self.play(Write(area_circle_formula),Write(area_square_formula))
-        self.wait(0.3)
-
-        ratio_formula = MathTex(
-            "\\frac{A_{\\text{circle}}}{A_{\\text{square}}} = \\frac{\\pi r^2}{4r^2}",
-            font_size=45, color = BLACK
-        ).next_to(area_square_formula, DOWN, aligned_edge=LEFT, buff=0.7)
-        self.play(Write(ratio_formula))
-
-        simplified_ratio = MathTex(
-            "= \\frac{\\pi}{4}",
-            font_size=45, color=DARK_BLUE
-        ).next_to(ratio_formula, RIGHT, buff=0.2)
-        self.play(Write(simplified_ratio))
-        self.wait(0.3)
-
-        pi_formula = MathTex(
-            "\\pi = 4 \\times \\frac{A_{\\text{circle}}}{A_{\\text{square}}}",
-            font_size=50, color=DARK_BLUE
-        ).next_to(ratio_formula, DOWN, aligned_edge=LEFT, buff=0.7)
-        self.play(Write(pi_formula))
-        self.wait(0.3)
-
-        self.play(FadeOut(*self.mobjects))
-
-
-# --- Scene 4: Introducing Random Points ---
-class IntroducePointsScene(Scene):
-    def construct(self):
-        square_side = 4
-        circle_radius = square_side / 2
-
-        square = Square(side_length=square_side, color=DARK_BLUE, stroke_width=3)
-        circle = Circle(radius=circle_radius, color=BLUE, stroke_width=3)
-
-        self.add(square, circle)
-
-        intro_text = Text("Now, let's 'throw' some random points!", font_size=40, color = BLACK).to_edge(UP)
-        self.play(Write(intro_text), run_time = 0.5)
-        self.wait(1)
-
-        points = VGroup()
-        num_initial_points = 10
-
-        for i in range(num_initial_points):
-            x = random.uniform(-circle_radius, circle_radius)
-            y = random.uniform(-circle_radius, circle_radius)
-
-            dot_pos = np.array([x, y, 0])
-
-            if x**2 + y**2 <= circle_radius**2:
-                dot = Dot(dot_pos, color=GREEN, radius=0.08)
-                is_inside_text = Text("Inside Circle", color=GREEN, font_size=25).next_to(dot, RIGHT, buff=0.1)
-            else:
-                dot = Dot(dot_pos, color=RED, radius=0.08)
-                is_inside_text = Text("Outside Circle", color=RED, font_size=25).next_to(dot, RIGHT, buff=0.1)
-
-            points.add(dot)
-            self.play(FadeIn(dot), run_time=0.1)
-            if i < 4:
-                self.play(Write(is_inside_text))
-                self.wait(0.2)
-                self.play(FadeOut(is_inside_text))
-
-        self.wait(0.5)
-
-        explanation_text = Text("Green dots are inside the circle, red dots are outside.", font_size=35, color = DARK_BLUE).to_edge(DOWN)
-        self.play(Write(explanation_text), run_time = 0.5)
-        self.wait(0.5)
-
-        self.play(FadeOut(*self.mobjects))
-
-# --- Scene 5: The Simulation in Progress (Small N) ---
-class SimulationSmallN(Scene):
-    def construct(self):
-        square_side = 4
-        circle_radius = square_side / 2
-
-        square = Square(side_length=square_side, color=WHITE, stroke_width=1)
-        circle = Circle(radius=circle_radius, color=BLUE, stroke_width=1)
-        self.add(square, circle)
-
-        total_points = ValueTracker(0)
-        inside_circle_points = ValueTracker(0)
-        estimated_pi = ValueTracker(0.0)
-
-        total_text = MathTex("N_{\\text{total}}:", font_size=35).to_corner(UL).shift(RIGHT*0.5)
-        total_val = always_redraw(
-            lambda: DecimalNumber(total_points.get_value(), num_decimal_places=0)
-            .next_to(total_text, RIGHT)
-        )
-
-        inside_text = MathTex("N_{\\text{inside}}:", font_size=35).next_to(total_text, DOWN, aligned_edge=LEFT)
-        inside_val = always_redraw(
-            lambda: DecimalNumber(inside_circle_points.get_value(), num_decimal_places=0)
-            .next_to(inside_text, RIGHT)
-        )
-
-        pi_est_text = MathTex("\\pi \\approx", font_size=40).to_corner(UR).shift(LEFT*0.5)
-        pi_est_val = always_redraw(
-            lambda: DecimalNumber(estimated_pi.get_value(), num_decimal_places=4)
-            .next_to(pi_est_text, RIGHT)
-            .set_color(GREEN_SCREEN)
-        )
-
-        self.add(total_text, total_val, inside_text, inside_val, pi_est_text, pi_est_val)
-
-        points_group = VGroup()
-        num_points_small_n = 200
-
-        status_text = Text("Initial Samples...", font_size=30).to_edge(DOWN)
-        self.add(status_text)
-        self.wait(0.5)
-
-        for i in range(num_points_small_n):
-            x = random.uniform(-circle_radius, circle_radius)
-            y = random.uniform(-circle_radius, circle_radius)
-
-            dot_pos = np.array([x, y, 0])
-
-            total_points.increment_value(1)
-
-            if x**2 + y**2 <= circle_radius**2:
-                dot = Dot(dot_pos, color=GREEN, radius=0.03)
-                inside_circle_points.increment_value(1)
-            else:
-                dot = Dot(dot_pos, color=RED, radius=0.03)
-
-            points_group.add(dot)
-            self.add(dot)
-
-            if total_points.get_value() > 0:
-                current_pi_estimate = 4 * (inside_circle_points.get_value() / total_points.get_value())
-                estimated_pi.set_value(current_pi_estimate)
-
-            if i % 20 == 0:
-                self.wait(0.01)
-
-        self.wait(1)
-        self.play(FadeOut(*self.mobjects))
-
-# --- Scene 6: Scaling Up - The Law of Large Numbers ---
-class SimulationLargeN(Scene):
-    def construct(self):
-        square_side = 4
-        circle_radius = square_side / 2
-
-        square = Square(side_length=square_side, color=WHITE, stroke_width=1)
-        circle = Circle(radius=circle_radius, color=BLUE, stroke_width=1)
-        self.add(square, circle)
-
-        # Start with a base of points from previous scene for continuity
-        # These are illustrative values; for exact continuation, you'd pass them.
-        total_points = ValueTracker(200)
-        inside_circle_points = ValueTracker(int(math.pi/4 * 200)) # Approx 157
-        estimated_pi = ValueTracker(4 * (inside_circle_points.get_value() / total_points.get_value()))
-
-        # Display counters
-        total_text = MathTex("N_{\\text{total}}:", font_size=35).to_corner(UL).shift(RIGHT*0.5)
-        total_val = always_redraw(
-            lambda: DecimalNumber(total_points.get_value(), num_decimal_places=0)
-            .next_to(total_text, RIGHT)
-        )
-
-        inside_text = MathTex("N_{\\text{inside}}:", font_size=35).next_to(total_text, DOWN, aligned_edge=LEFT)
-        inside_val = always_redraw(
-            lambda: DecimalNumber(inside_circle_points.get_value(), num_decimal_places=0)
-            .next_to(inside_text, RIGHT)
-        )
-
-        pi_est_text = MathTex("\\pi \\approx", font_size=40).to_corner(UR).shift(LEFT*0.5)
-        pi_est_val = always_redraw(
-            lambda: DecimalNumber(estimated_pi.get_value(), num_decimal_places=4)
-            .next_to(pi_est_text, RIGHT)
-            .set_color(GREEN_SCREEN)
-        )
-
-        true_pi_val = MathTex(f"\\pi_{{\\text{{true}}}} = {math.pi:.5f}...", font_size=30, color=ORANGE_COLOR).next_to(pi_est_text, DOWN, aligned_edge=LEFT)
-
-        self.add(total_text, total_val, inside_text, inside_val, pi_est_text, pi_est_val, true_pi_val)
-
-        # Add initial points to represent continuation from previous scene
-        initial_points_on_screen = VGroup()
-        for _ in range(int(total_points.get_value())):
-            x = random.uniform(-circle_radius, circle_radius)
-            y = random.uniform(-circle_radius, circle_radius)
-            dot_pos = np.array([x, y, 0])
-            dot = Dot(dot_pos, color=GREEN if x**2 + y**2 <= circle_radius**2 else RED, radius=0.03)
-            initial_points_on_screen.add(dot)
-        self.add(initial_points_on_screen)
-
-        law_of_large_numbers_text = Text("The Law of Large Numbers:", font_size=40).to_edge(DOWN)
-        explanation = Text("More points = More Accuracy!", font_size=35, color=YELLOW).next_to(law_of_large_numbers_text, DOWN)
-
-        self.play(Write(law_of_large_numbers_text))
-        self.wait(0.5)
-        self.play(Write(explanation))
-        self.wait(0.5)
-
-        num_points_to_add = 20000 # Add more points for large N simulation
-        points_per_frame = 500 # Adjust for desired animation speed
-
-        def update_simulation(dt):
-            current_total = total_points.get_value()
-            if current_total >= 200 + num_points_to_add: # Ensure we don't exceed target
-                self.remove_updater(update_simulation)
-                return
-
-            for _ in range(points_per_frame):
-                x = random.uniform(-circle_radius, circle_radius)
-                y = random.uniform(-circle_radius, circle_radius)
-
-                dot_pos = np.array([x, y, 0])
-
-                total_points.increment_value(1)
-
-                if x**2 + y**2 <= circle_radius**2:
-                    dot = Dot(dot_pos, color=GREEN, radius=0.03)
-                    inside_circle_points.increment_value(1)
+        # Step 3: Counters in LaTeX frac format
+        inside_count_gp = 0 # Renamed to avoid conflict
+        frac_counter_gp = MathTex(r"\frac{0}{0}", font_size=36, color=dark_green).next_to(outer_square.get_corner(UL),(LEFT+UP), buff = 1)
+        prob_value_gp = DecimalNumber(0, num_decimal_places=4, color=BLACK, font_size=36).next_to(outer_square.get_corner(DR),(RIGHT + DOWN), buff = 1)
+        running_prob_label_gp = Text("Area \u2248 ", font_size=36, color=BLACK).next_to(prob_value_gp, LEFT, buff=0.2)
+
+        running_prob_group_gp = VGroup(running_prob_label_gp, prob_value_gp)
+        self.add(frac_counter_gp, running_prob_group_gp)
+
+        # Step 4: Point dropping
+        total_points_gp = 1000 # Renamed to avoid conflict
+        half_outer_gp = outer_side / 2 # Renamed to avoid conflict
+        half_inner_gp = inner_side / 2 # Renamed to avoid conflict
+        points_group_gp = VGroup() # Renamed to avoid conflict
+        batch_size_gp = 500 # Renamed to avoid conflict
+
+
+        for i in range(0, total_points_gp, batch_size_gp):
+            batch_points_gp = VGroup()
+            num_current_points_gp = min(batch_size_gp, total_points_gp - i)
+
+            for j in range(num_current_points_gp):
+                x = random.uniform(-half_outer_gp, half_outer_gp)
+                y = random.uniform(-half_outer_gp, half_outer_gp)
+                point = [x, y, 0]
+
+                if -half_inner_gp <= x <= half_inner_gp and -half_inner_gp <= y <= half_inner_gp:
+                    color = dark_green
+                    inside_count_gp += 1
                 else:
-                    dot = Dot(dot_pos, color=RED, radius=0.03)
+                    color = dark_red
 
-                self.add(dot)
+                dot = Dot(point=point, radius=0.025, color=color)
+                batch_points_gp.add(dot)
 
-                if total_points.get_value() > 0: # Avoid division by zero
-                    current_pi_estimate = 4 * (inside_circle_points.get_value() / total_points.get_value())
-                    estimated_pi.set_value(current_pi_estimate)
+            self.add(batch_points_gp)
+            points_group_gp.add(batch_points_gp)
 
-                if total_points.get_value() >= 200 + num_points_to_add:
-                    break
+            total_so_far_gp = i + num_current_points_gp
+            
+            new_frac_tex_gp = MathTex(
+                r"\frac{" + f"{inside_count_gp}" + r"}{" + f"{total_so_far_gp}" + r"}",
+                font_size=36,
+                color=dark_green
+            ).move_to(frac_counter_gp.get_center())
 
-        self.add_updater(update_simulation)
-        # Calculate a wait time that allows the updater to run through all points
-        self.wait(num_points_to_add / points_per_frame * (1/60.0)) # Approx frames * frame_duration (assuming 60fps)
+            self.play(Transform(frac_counter_gp, new_frac_tex_gp), run_time=0.1)
+            prob_value_gp.set_value(inside_count_gp / total_so_far_gp)
 
-        self.wait(2)
+            self.wait(0.1)
+        
+        self.wait(1)
+        self.play(FadeOut(frac_counter_gp), FadeOut(running_prob_group_gp)) 
+        
+        # Step 5: Group figure and shift up
+        figure_group_gp = VGroup(
+            outer_square, inner_square, outer_label, inner_label, points_group_gp)
+        self.play(figure_group_gp.animate.shift(UP * 3))
 
-        self.play(FadeOut(*self.mobjects))
 
-# --- Scene 7: Conclusion - The Power of Randomness ---
-class ConclusionScene(Scene):
-    def construct(self):
-        square_side = 4
-        circle_radius = square_side / 2
-        square = Square(side_length=square_side, color=WHITE, stroke_width=1)
-        circle = Circle(radius=circle_radius, color=BLUE, stroke_width=1)
+        # Step 6: Area ratio and final estimated probability (on right)
+        area_formula_gp = MathTex(
+            r"\frac{\text{Area of inner square}}{\text{Area of outer square}} = "
+            + r"\frac{" + f"{inner_side}^2" + "}{" + f"{outer_side}^2" + "} = "
+            + f"\\frac{{{int(inner_side ** 2)}}}{{{int(outer_side ** 2)}}} = {inner_side ** 2 / outer_side ** 2:.2f}",
+            color=BLACK, font_size = 36
+        )
 
-        # Simulate a dense cloud of final points
-        final_points_group = VGroup()
-        # These numbers are for illustrative density, not precise carry-over
-        total_simulated_for_display = 20000
-        # Approximately what N_inside would be for 20000 points if pi/4 is the ratio
-        simulated_inside = int(total_simulated_for_display * (math.pi / 4))
+        final_estimated_prob_display_gp = MathTex(
+            r"\text{Estimated Area} \approx " + f"{inside_count_gp / total_points_gp:.4f}",
+            color=BLACK, font_size = 38
+        )
 
-        for _ in range(total_simulated_for_display):
-            x = random.uniform(-circle_radius, circle_radius)
-            y = random.uniform(-circle_radius, circle_radius)
-            dot_pos = np.array([x, y, 0])
-            dot = Dot(dot_pos, color=GREEN if x**2 + y**2 <= circle_radius**2 else RED, radius=0.02)
-            final_points_group.add(dot)
+        formula_group_gp = VGroup(area_formula_gp, final_estimated_prob_display_gp).arrange(DOWN, aligned_edge=LEFT, buff=0.5)
+        formula_group_gp.next_to(figure_group_gp, DOWN, buff=1.5)
 
-        self.add(square, circle, final_points_group)
+        self.play(Write(area_formula_gp))
+        self.play(Write(final_estimated_prob_display_gp)) 
+        self.wait(1)
+        
+        self.play(FadeOut(figure_group_gp, formula_group_gp)) # Explicitly fade out objects from this section
+        self.wait(1) # Pause between sections
 
-        final_pi_estimate = 4 * (simulated_inside / total_simulated_for_display)
-        final_pi_text = MathTex(f"\\pi \\approx {final_pi_estimate:.5f}", font_size=70, color=GREEN_SCREEN).to_edge(UP)
 
-        self.play(Write(final_pi_text))
+        # --- Start Scene 3: SimultaneousMonteCarlo (from threeexamplesimultaneous.py) ---
+        square_side_mc = 3 # Renamed to avoid conflict
+        half_side_mc = square_side_mc / 2
+        total_points_mc = 1000
+        batch_size_mc = 500
+
+        # --- Setup for 1st Example (Top: Square & Triangle) ---
+        square1_pos_mc = UP * 5
+        square1_mc = Square(side_length=square_side_mc, color=BLACK).move_to(square1_pos_mc)
+
+        bottom_left_1_mc = square1_mc.get_corner(DL)
+        bottom_right_1_mc = square1_mc.get_corner(DR)
+        top_mid_1_mc = square1_mc.get_top()
+        triangle1_mc = Polygon(bottom_left_1_mc, bottom_right_1_mc, top_mid_1_mc, color=BLUE, fill_opacity=0.3)
+
+        base_line_1_mc = Line(bottom_left_1_mc, bottom_right_1_mc, color=RED)
+        base_label_1_mc = MathTex(f"{square_side_mc}", font_size=28, color=RED).next_to(base_line_1_mc, DOWN)
+
+        inside_triangle_count_mc = 0
+        frac_counter1_mc = MathTex(r"\frac{0}{0}", font_size=30, color=dark_green)
+        frac_counter1_mc.next_to(square1_mc.get_corner(UL), (LEFT*0.5 + UP * 0.3), buff=1)
+        prob_value1_mc = DecimalNumber(0, num_decimal_places=4, color=RED, font_size=36).next_to(square1_mc.get_corner(DR), (RIGHT + DOWN * 0.3), buff=1)
+        prob_label1_mc = Text("Area \u2248 ", font_size=32, color=RED).next_to(prob_value1_mc, LEFT, buff=0.2)
+        
+        triangle_vertices_for_check_mc = [bottom_left_1_mc, bottom_right_1_mc, top_mid_1_mc]
+        all_dots_list1_mc = []
+        plotted_dots_group1_mc = VGroup()
+
+
+        # --- Setup for 2nd Example (Middle: Nested Square Frame) ---
+        outer_frame_boundary_side_2_mc = 2
+        inner_void_side_2_mc = 1          
+        
+        outermost_square_2_mc = Square(side_length=square_side_mc, color=BLACK)
+        outer_frame_square_2_mc = Square(side_length=outer_frame_boundary_side_2_mc, color=BLACK)
+        inner_void_square_2_mc = Square(side_length=inner_void_side_2_mc, color=WHITE, fill_opacity=1)
+
+        frame_shape_2_mc = Difference(outer_frame_square_2_mc.copy(), inner_void_square_2_mc.copy())
+        frame_shape_2_mc.set_color(BLUE).set_opacity(0.5)
+
+        outermost_side_line_bottom_2_mc = Line(outermost_square_2_mc.get_corner(DL), outermost_square_2_mc.get_corner(DR), color=RED)
+        outermost_side_label_bottom_2_mc = MathTex(f"{square_side_mc}", font_size=28, color=dark_red).next_to(outermost_side_line_bottom_2_mc, DOWN)
+        
+        outer_frame_side_line_right_2_mc = Line(outer_frame_square_2_mc.get_corner(DR), outer_frame_square_2_mc.get_corner(UR), color=RED)
+        outer_frame_side_label_right_2_mc = MathTex(f"{outer_frame_boundary_side_2_mc}", font_size=28, color=dark_green).next_to(outer_frame_side_line_right_2_mc, RIGHT)
+
+        inner_void_side_line_top_2_mc = Line(inner_void_square_2_mc.get_corner(UL), inner_void_square_2_mc.get_corner(UR), color=RED)
+        inner_void_side_label_top_2_mc = MathTex(f"{inner_void_side_2_mc}", font_size=28, color=DARK_BLUE).next_to(inner_void_side_line_top_2_mc, UP)
+
+        inside_frame_count_mc = 0
+        frac_counter2_mc = MathTex(r"\frac{0}{0}", font_size=30, color=dark_green).next_to(outermost_square_2_mc.get_corner(UL), (LEFT*0.5 + UP * 0.3), buff=1)
+        prob_value2_mc = DecimalNumber(0, num_decimal_places=4, color=RED, font_size=36).next_to(outermost_square_2_mc.get_corner(DR), (RIGHT + DOWN * 0.3), buff=1)
+        prob_label2_mc = Text("Area \u2248 ", font_size=32, color=RED).next_to(prob_value2_mc, LEFT, buff=0.2)
+        
+        all_dots_list2_mc = []
+        plotted_dots_group2_mc = VGroup()
+
+
+        # --- Setup for 3rd Example (Bottom: Square & Diagonal Hexagon) ---
+        square2_pos_mc = DOWN * 5
+        square2_mc = Square(side_length=square_side_mc, color=BLACK).move_to(square2_pos_mc)
+        band_offset_mc = 0.5
+
+        dl_3_mc = square2_mc.get_corner(DL)
+        dr_3_mc = square2_mc.get_corner(DR)
+        ul_3_mc = square2_mc.get_corner(UL)
+        ur_3_mc = square2_mc.get_corner(UR)
+
+        p1_3_mc = ul_3_mc                               
+        p2_3_mc = ul_3_mc + RIGHT * band_offset_mc         
+        p3_3_mc = dr_3_mc + UP * band_offset_mc            
+        p4_3_mc = dr_3_mc                               
+        p5_3_mc = dr_3_mc + LEFT * band_offset_mc          
+        p6_3_mc = ul_3_mc + DOWN * band_offset_mc          
+
+        hexagon3_mc = Polygon(p1_3_mc, p2_3_mc, p3_3_mc, p4_3_mc, p5_3_mc, p6_3_mc, color=BLUE, fill_opacity=0.3)
+
+        base_line_3_mc = Line(dl_3_mc, dr_3_mc, color=RED)
+        height_line_3_mc = Line(ul_3_mc, dl_3_mc, color=RED)
+        base_label_3_mc = MathTex(f"{square_side_mc}", font_size=28, color=RED).next_to(base_line_3_mc, DOWN)
+        height_label_3_mc = MathTex(f"{square_side_mc}", font_size=28, color=RED).next_to(height_line_3_mc, LEFT)
+
+        inside_hexagon_count_mc = 0
+        frac_counter3_mc = MathTex(r"\frac{0}{0}", font_size=30, color=dark_green).next_to(square2_mc.get_corner(UL), (LEFT*0.5 + UP * 0.3), buff=1)
+        prob_value3_mc = DecimalNumber(0, num_decimal_places=4, color=RED, font_size=36).next_to(square2_mc.get_corner(DR), (RIGHT + DOWN * 0.3), buff=1)
+        prob_label3_mc = Text("Area \u2248 ", font_size=32, color=RED).next_to(prob_value3_mc, LEFT, buff=0.2)
+
+        hexagon_vertices_for_check_mc = [v[:2] for v in hexagon3_mc.get_vertices()]
+        all_dots_list3_mc = []
+        plotted_dots_group3_mc = VGroup()
+
+
+        # --- Common `is_inside_` functions ---
+        def is_inside_triangle(p, a, b, c):
+            def det(p1, p2, p3):
+                return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p3[0] - p1[0]) * (p2[1] - p1[1])
+            s1 = det(p, a, b)
+            s2 = det(p, b, c)
+            s3 = det(p, c, a)
+            return (s1 >= -self.EPSILON and s2 >= -self.EPSILON and s3 >= -self.EPSILON) or \
+                   (s1 <= self.EPSILON and s2 <= self.EPSILON and s3 <= self.EPSILON)
+
+        def is_inside_frame(x, y, outer_half_side, inner_half_side):
+            is_inside_outer = (-outer_half_side <= x <= outer_half_side) and \
+                              (-outer_half_side <= y <= outer_half_side)
+            is_inside_void = (-inner_half_side <= x <= inner_half_side) and \
+                             (-inner_half_side <= y <= inner_half_side)
+            return is_inside_outer and not is_inside_void
+        
+        def is_inside_polygon(p, vertices):
+            def sign(p1, p2, p3):
+                return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]) 
+            
+            x_p, y_p = p
+            num_vertices = len(vertices)
+            
+            if num_vertices < 3:
+                return False
+
+            first_sign_val = sign(vertices[0], vertices[1], (x_p, y_p))
+
+            for i in range(num_vertices):
+                v1 = vertices[i]
+                v2 = vertices[(i + 1) % num_vertices]
+                current_sign_val = sign(v1, v2, (x_p, y_p))
+
+                if abs(current_sign_val) < self.EPSILON:
+                    continue
+                
+                if (first_sign_val > self.EPSILON and current_sign_val < -self.EPSILON) or \
+                   (first_sign_val < -self.EPSILON and current_sign_val > self.EPSILON):
+                    return False
+            return True
+
+
+        # --- Animate initial setups for all three figures simultaneously ---
+        self.play(
+            Create(square1_mc), Create(triangle1_mc), Create(base_line_1_mc),
+            Write(base_label_1_mc),
+            
+            Create(outermost_square_2_mc), Create(frame_shape_2_mc),
+            Create(outermost_side_line_bottom_2_mc), Write(outermost_side_label_bottom_2_mc),
+            Create(outer_frame_side_line_right_2_mc), Write(outer_frame_side_label_right_2_mc),
+            Create(inner_void_side_line_top_2_mc), Write(inner_void_side_label_top_2_mc),
+            
+            Create(square2_mc), Create(hexagon3_mc), Create(base_line_3_mc), Create(height_line_3_mc),
+            Write(base_label_3_mc), Write(height_label_3_mc)
+        )
         self.wait(1)
 
-        summary_text1 = Text("By simply throwing random 'darts'...", font_size=40).next_to(final_pi_text, DOWN, buff=1)
-        summary_text2 = Text("...we can estimate the value of Pi!", font_size=40).next_to(summary_text1, DOWN, buff=0.5)
+        self.add(frac_counter1_mc, prob_label1_mc, prob_value1_mc,
+                 frac_counter2_mc, prob_label2_mc, prob_value2_mc,
+                 frac_counter3_mc, prob_label3_mc, prob_value3_mc)
 
-        self.play(Write(summary_text1))
-        self.play(Write(summary_text2))
-        self.wait(1.5)
+        self.wait(0.5)
 
-        power_of_mc = Text("This is the power of the Monte Carlo Method!", font_size=45, color=YELLOW).to_edge(DOWN)
-        self.play(Write(power_of_mc))
-        self.wait(2)
+        # --- Main Simultaneous Point Dropping Loop ---
+        for i in range(total_points_mc):
+            # --- Example 1: Triangle (Top) ---
+            random_x_offset_1_mc = random.uniform(-half_side_mc, half_side_mc)
+            random_y_offset_1_mc = random.uniform(-half_side_mc, half_side_mc)
+            point_coords_1_mc = np.array([random_x_offset_1_mc, random_y_offset_1_mc, 0]) + square1_pos_mc
 
-        # No FadeOut here, as this is the last scene and the animation will end.
+            if is_inside_triangle(point_coords_1_mc, *triangle_vertices_for_check_mc):
+                color1_mc = dark_green
+                inside_triangle_count_mc += 1
+            else:
+                color1_mc = dark_red
+            dot1_mc = Dot(point=point_coords_1_mc, radius=0.025, color=color1_mc)
+            all_dots_list1_mc.append(dot1_mc)
+            plotted_dots_group1_mc.add(dot1_mc)
 
-# --- Main Orchestration Scene ---
-class MonteCarloPiAnimation(Scene):
-    def construct(self):
-        self.camera.background_color = "#282828" # Dark background
+            # --- Example 2: Frame (Middle) ---
+            random_x_offset_2_mc = random.uniform(-half_side_mc, half_side_mc)
+            random_y_offset_2_mc = random.uniform(-half_side_mc, half_side_mc)
+            point_coords_2_mc = np.array([random_x_offset_2_mc, random_y_offset_2_mc, 0])
+            
+            if is_inside_frame(point_coords_2_mc[0], point_coords_2_mc[1], outer_frame_boundary_side_2_mc / 2, inner_void_side_2_mc / 2):
+                color2_mc = dark_green
+                inside_frame_count_mc += 1
+            else:
+                color2_mc = dark_red
+            dot2_mc = Dot(point=point_coords_2_mc, radius=0.025, color=color2_mc)
+            all_dots_list2_mc.append(dot2_mc)
+            plotted_dots_group2_mc.add(dot2_mc)
 
-        # Call the construct method of each sub-scene directly
-        # Each sub-scene is responsible for clearing its own mobjects
-        IntroductionScene().construct()
-        SetupScene().construct()
-        IntroducePointsScene().construct()
-        SimulationSmallN().construct()
-        SimulationLargeN().construct()
-        ConclusionScene().construct()
+            # --- Example 3: Hexagon (Bottom) ---
+            random_x_offset_3_mc = random.uniform(-half_side_mc, half_side_mc)
+            random_y_offset_3_mc = random.uniform(-half_side_mc, half_side_mc)
+            point_coords_3_mc = np.array([random_x_offset_3_mc, random_y_offset_3_mc, 0]) + square2_pos_mc
+
+            if is_inside_polygon(point_coords_3_mc[:2], hexagon_vertices_for_check_mc):
+                color3_mc = dark_green
+                inside_hexagon_count_mc += 1
+            else:
+                color3_mc = dark_red
+            dot3_mc = Dot(point=point_coords_3_mc, radius=0.025, color=color3_mc)
+            all_dots_list3_mc.append(dot3_mc)
+            plotted_dots_group3_mc.add(dot3_mc)
+
+            # --- Batch Update for all examples ---
+            if (i + 1) % batch_size_mc == 0 or i == total_points_mc - 1:
+                self.add(*all_dots_list1_mc, *all_dots_list2_mc, *all_dots_list3_mc)
+
+                frac_counter1_mc.become(MathTex(r"\frac{" + f"{inside_triangle_count_mc}" + r"}{" + f"{i + 1}" + r"}", font_size=30, color=dark_green).move_to(frac_counter1_mc))
+                prob_value1_mc.set_value(inside_triangle_count_mc / (i + 1))
+
+                frac_counter2_mc.become(MathTex(r"\frac{" + f"{inside_frame_count_mc}" + r"}{" + f"{i + 1}" + r"}", font_size=30, color=dark_green).move_to(frac_counter2_mc))
+                prob_value2_mc.set_value(inside_frame_count_mc / (i + 1))
+
+                frac_counter3_mc.become(MathTex(r"\frac{" + f"{inside_hexagon_count_mc}" + r"}{" + f"{i + 1}" + r"}", font_size=30, color=dark_green).move_to(frac_counter3_mc))
+                prob_value3_mc.set_value(inside_hexagon_count_mc / (i + 1))
+                
+                self.wait(0.1)
+
+                all_dots_list1_mc = []
+                all_dots_list2_mc = []
+                all_dots_list3_mc = []
+
+        self.wait(1)
+
+        # --- Final Animation Sequence for SimultaneousMonteCarlo ---
+        shapes_and_lines_group_mc = VGroup( # Renamed
+            square1_mc, triangle1_mc, base_line_1_mc, base_label_1_mc,
+            outermost_square_2_mc, outer_frame_square_2_mc, inner_void_square_2_mc, frame_shape_2_mc,
+            outermost_side_line_bottom_2_mc, outermost_side_label_bottom_2_mc,
+            outer_frame_side_line_right_2_mc, outer_frame_side_label_right_2_mc,
+            inner_void_side_line_top_2_mc, inner_void_side_label_top_2_mc,
+            square2_mc, hexagon3_mc, base_line_3_mc, height_line_3_mc, base_label_3_mc, height_label_3_mc
+        )
+
+        prob_group1_mc = VGroup(prob_label1_mc, prob_value1_mc)
+        prob_group2_mc = VGroup(prob_label2_mc, prob_value2_mc)
+        prob_group3_mc = VGroup(prob_label3_mc, prob_value3_mc)
 
 
-class ShapesVsCurveIntro(Scene):
-    def construct(self):
-        # --- 1. Opening Scene: Straightforward Shapes ---
-        # Setup: Grid
-        grid = NumberPlane(
-            x_range=[-7, 7, 1],
-            y_range=[-4, 4, 1],
-            axis_config={"color": "#606060"}, # Slightly darker gray for subtle grid
-            background_line_style={"stroke_opacity": 0.3}
-        ).set_opacity(0.5)
-
-        self.play(FadeIn(grid, run_time=1))
-
-        # Rectangle
-        rectangle = Rectangle(width=4, height=2, color=BLUE_C, fill_opacity=0.5)
-        rect_l_label = Tex("L", color=BLUE_E).next_to(rectangle.get_left(), LEFT).shift(UP*0.5)
-        rect_w_label = Tex("W", color=BLUE_E).next_to(rectangle.get_bottom(), DOWN).shift(LEFT*0.5)
-        
         self.play(
-            Create(rectangle, run_time=1),
+            FadeOut(shapes_and_lines_group_mc),
+            FadeOut(plotted_dots_group1_mc),
+            FadeOut(plotted_dots_group2_mc),
+            FadeOut(plotted_dots_group3_mc),
+            FadeOut(frac_counter1_mc),
+            FadeOut(frac_counter2_mc),
+            FadeOut(frac_counter3_mc),
+            run_time = 0.75
         )
         self.play(
-            FadeIn(rect_l_label, shift=LEFT*0.2),
-            FadeIn(rect_w_label, shift=DOWN*0.2),
-            run_time=0.5
-        )
-        self.wait(0.7)
-
-        # Triangle
-        triangle = Triangle(color=GREEN_C, fill_opacity=0.5).scale(1.5).move_to([-2, -1, 0])
-        tri_b_label = Tex("B", color=GREEN_E).next_to(triangle.get_bottom(), DOWN).shift(LEFT*0.5)
-        tri_h_label = Tex("H", color=GREEN_E).next_to(triangle.get_left(), LEFT).shift(UP*0.5)
-
-        self.play(
-            FadeOut(rect_l_label, rect_w_label),
-            Transform(rectangle, triangle), # Morph rectangle into triangle
+            prob_group1_mc.animate.move_to(square1_pos_mc).scale(2),
+            prob_group2_mc.animate.move_to(ORIGIN).scale(2),
+            prob_group3_mc.animate.move_to(square2_pos_mc).scale(2),
             run_time=1.5
         )
-        self.play(
-            FadeIn(tri_b_label, shift=DOWN*0.2),
-            FadeIn(tri_h_label, shift=LEFT*0.2),
-            run_time=0.5
-        )
         self.wait(1)
+        self.play(FadeOut(prob_group1_mc, prob_group2_mc, prob_group3_mc)) # Fade out the final moved groups
+        self.wait(1) # Pause between sections
 
-        # Narration for shapes
-        straight_text = Text(
-            "When we measure shapes like squares or triangles, it's pretty straightforward.",
-            font_size=28
-        ).to_edge(UP).shift(DOWN*0.5) # Positioning text
-        
-        self.play(Write(straight_text, run_time=2))
-        self.wait(1.5)
 
-        # --- 2. The Shift: Introducing the Curve ---
-        self.play(
-            FadeOut(triangle, tri_b_label, tri_h_label),
-            FadeOut(straight_text),
-            FadeOut(grid),
-            run_time=1
-        )
+        # --- Start Scene 4: PiEstimationFullVideo (from piestimationverticle.py) ---
+        square_side_pi = 4
+        circle_radius_pi = square_side_pi / 2
 
-        circle = Circle(radius=3, color=YELLOW_C, fill_opacity=0.5)
+        square_pi = Square(side_length=square_side_pi, color=BLACK, stroke_width=3)
+        square_label_pi = Tex("Square", font_size=35, color=BLACK).next_to(square_pi, UP)
 
-        self.play(
-            Create(circle, run_time=2.5), # Standard create animation
-        )
+        circle_pi = Circle(radius=circle_radius_pi, color=BLUE, stroke_width=3)
+        circle_label_pi = Tex("Inscribed Circle", font_size=35, color=BLACK).next_to(circle_pi, DOWN)
+
+        self.play(Create(circle_pi), Write(circle_label_pi), Create(square_pi), Write(square_label_pi))
+
+        radius_line_pi = Line(circle_pi.get_center(), circle_pi.get_right(), color=RED, stroke_width=2)
+        radius_label_pi = MathTex("r", font_size=35, color=BLACK).next_to(radius_line_pi, UP)
+
+        side_line_left_pi = Line(square_pi.get_corner(UL), square_pi.get_corner(DL), color=GREEN, stroke_width=2)
+        side_label_left_pi = MathTex("2r", font_size=35, color=BLACK).next_to(side_line_left_pi, LEFT)
+        self.play(Create(radius_line_pi), Write(radius_label_pi), Create(side_line_left_pi), Write(side_label_left_pi), run_time=0.5)
+
+        group_objects_pi = VGroup(square_pi, circle_pi, radius_line_pi, radius_label_pi, side_line_left_pi, side_label_left_pi, square_label_pi, circle_label_pi)
+        self.play(group_objects_pi.animate.shift(UP * 4))
+
+        text_area_intro_pi = Text("Let's look at their areas...", font_size=40, color=BLACK).next_to(group_objects_pi,DOWN, buff=1)
+        self.play(Write(text_area_intro_pi), run_time = 0.5)
+        self.play(FadeOut(text_area_intro_pi))
+
+        area_circle_formula_pi = MathTex(
+            "A_{\\text{circle}} = \\pi r^2",
+            font_size=45, color=BLACK
+        ).next_to(group_objects_pi,DOWN, buff=1, aligned_edge=LEFT).shift(RIGHT*0.5)
+
+        area_square_formula_pi = MathTex(
+            "A_{\\text{square}} = (2r)^2 = 4r^2",
+            font_size=45, color=BLACK
+        ).next_to(area_circle_formula_pi, DOWN, aligned_edge=LEFT)
+        self.play(Write(area_circle_formula_pi), Write(area_square_formula_pi))
+        self.wait(0.3)
+
+        ratio_formula_pi = MathTex(
+            "\\frac{A_{\\text{circle}}}{A_{\\text{square}}} = \\frac{\\pi r^2}{4r^2}",
+            font_size=45, color=BLACK
+        ).next_to(area_square_formula_pi, DOWN, aligned_edge=LEFT, buff=0.7)
+        self.play(Write(ratio_formula_pi))
+
+        simplified_ratio_pi = MathTex(
+            "= \\frac{\\pi}{4}",
+            font_size=45, color=DARK_BLUE
+        ).next_to(ratio_formula_pi, RIGHT, buff=0.2)
+        self.play(Write(simplified_ratio_pi))
+        self.wait(0.3)
+
+        pi_formula_pi = MathTex(
+            "\\pi = 4 \\times \\frac{A_{\\text{circle}}}{A_{\\text{square}}}",
+            font_size=50, color=DARK_BLUE
+        ).next_to(ratio_formula_pi, DOWN, aligned_edge=LEFT, buff=0.7)
+        self.play(Write(pi_formula_pi))
         self.wait(0.5)
 
-        # Narration for circle
-        curve_text = Text(
-            "But what about a shape that's all curve? No straight lines, no sharp corners!",
-            font_size=28
-        ).to_edge(UP).shift(DOWN*0.5)
-        self.play(Write(curve_text, run_time=2))
-        self.wait(1.5)
+        self.play(FadeOut(area_circle_formula_pi, area_square_formula_pi, ratio_formula_pi,
+                            simplified_ratio_pi, radius_line_pi, radius_label_pi, side_line_left_pi, side_label_left_pi, pi_formula_pi))
 
-        # --- 3. The Pi Reveal: The Endless Challenge ---
-        diameter = Line(circle.get_left(), circle.get_right(), color=RED_D)
+        geo_group_pi = VGroup(square_pi, circle_pi, square_label_pi, circle_label_pi)
+        self.play(geo_group_pi.animate.shift(DOWN * 4), run_time = 0.75)
+        self.wait(0.7)
+
+        inside_points_pi = 0
+        frac_counter_pi = MathTex(r"\frac{0}{0}", font_size=36, color=dark_green).next_to(square_pi.get_corner(UL),(LEFT+UP), buff = 1)
+        self.add(frac_counter_pi)
+
+        pi_value_display_pi = DecimalNumber(0, num_decimal_places=4, color=RED, font_size=40).next_to(square_pi.get_corner(DR),(RIGHT + DOWN), buff = 1)
+        pi_label_display_pi = Text("π \u2248 ", font_size=40, color=RED).next_to(pi_value_display_pi, LEFT, buff=0.2)
+
+        pi_group_display_pi = VGroup(pi_value_display_pi, pi_label_display_pi)
+        self.add(pi_group_display_pi)
+
+        total_points_pi = 1000
+        batch_size_pi = 500
+        all_dots_pi = VGroup()
         
-        self.play(
-            Create(diameter, run_time=1),
-        )
+
+        for i in range(0, total_points_pi, batch_size_pi):
+            animations = []
+            current_batch_count_pi = min(batch_size_pi, total_points_pi - i)
+
+            for _ in range(current_batch_count_pi):
+                x = random.uniform(-circle_radius_pi, circle_radius_pi)
+                y = random.uniform(-circle_radius_pi, circle_radius_pi)
+                point_coords_pi = [x, y, 0]
+
+                dot_pi = Dot(point=point_coords_pi, radius=0.025)
+
+                if x**2 + y**2 <= circle_radius_pi**2:
+                    dot_pi.set_color(dark_green1)
+                    inside_points_pi += 1
+                else:
+                    dot_pi.set_color(dark_red)
+
+                all_dots_pi.add(dot_pi)
+                animations.append(Create(dot_pi))
+
+            self.play(*animations, run_time=0.05, rate_func=linear)
+
+            current_total_pi = i + current_batch_count_pi
+
+            new_frac_counter_pi = MathTex(
+                r"\frac{" + f"{inside_points_pi}" + r"}{" + f"{current_total_pi}" + r"}",
+                font_size=36,
+                color=dark_green
+            ).move_to(frac_counter_pi.get_center())
+
+            self.play(Transform(frac_counter_pi, new_frac_counter_pi), run_time=0.1)
+            
+            if current_total_pi > 0:
+                pi_value_display_pi.set_value(4 * inside_points_pi / current_total_pi)
+            else:
+                pi_value_display_pi.set_value(0)
+
         self.wait(0.5)
+        self.play(FadeOut(all_dots_pi, geo_group_pi, frac_counter_pi))
+        self.wait(0.25)
 
-        # Create scrolling random digits
-        # This is a bit of a trick: create a long string of random-looking digits, then scroll it.
-        random_digits_str = "0351982746193754820615937402853716942085731" * 5 # Repeat for length
-        random_digits_mob = Tex(random_digits_str, font_size=28, color=GREY_A)
-        
-        # Position the digits along the circumference. This approximation is for visual effect.
-        random_digits_mob.next_to(circle, DOWN, buff=0.5)
-        
-        # Create a VGroup for the text and its initial position
-        random_digits_group = VGroup(random_digits_mob).move_to(random_digits_mob.get_center())
-
-        # Animate scrolling - make it appear from right and scroll to left
-        random_digits_group.shift(RIGHT * (random_digits_mob.width / 2 + MED_LARGE_BUFF))
-        
-        self.add(random_digits_group)
-        self.play(
-            random_digits_group.animate.shift(LEFT * (random_digits_mob.width + MED_LARGE_BUFF)),
-            run_time=5,
-            rate_func=linear,
-        )
-        
-        # Narration for challenge
-        challenge_text = Text(
-            "How do we find a number that truly describes something so perfectly round, yet so infinite in its detail?",
-            font_size=28
-        ).to_edge(UP).shift(DOWN*0.5)
-        self.play(Transform(curve_text, challenge_text), run_time=1) # Transform previous text
-        self.wait(1.5)
-
-        # --- 4. The Resolution: Enter Pi ---
-        # Fade out random digits and diameter
-        self.play(
-            FadeOut(random_digits_group, run_time=0.5),
-            FadeOut(diameter, run_time=0.5),
-        )
-
-        # Display Pi
-        pi_symbol = Tex("$\\\\pi$", font_size=100, color=BLUE_E).move_to(circle.get_center())
-        pi_digits = DecimalNumber(
-            PI,
-            num_decimal_places=20, # Show enough digits to convey endlessness
-            font_size=30,
-            color=WHITE
-        )
-        # Position digits around the circle, or just below for clarity
-        pi_digits.next_to(circle, DOWN, buff=0.7)
-
-        # Animate Pi appearing
-        self.play(
-            FadeIn(pi_symbol, scale=2),
-            run_time=1
-        )
-        self.play(
-            Create(pi_digits, run_time=3), # Animate digits appearing one by one
-            FadeOut(challenge_text), # Fade out the question
-            run_time=3
-        )
-
-        # Final narration
-        final_text = Text(
-            "It's through the magical, never-ending number we call Pi.",
-            font_size=32
-        ).to_edge(UP).shift(DOWN*0.5)
-        final_text_part2 = Text(
-            "And today, we'll explore how we figure out its incredible value!",
-            font_size=32
-        ).next_to(final_text, DOWN, buff=0.2)
-
-        self.play(Write(final_text, run_time=1.5))
+        self.play(pi_group_display_pi.animate.move_to(ORIGIN).scale(2.5), run_time=1.5)
         self.wait(1)
-        self.play(Write(final_text_part2, run_time=1.5))
-        self.wait(2)
+        self.play(FadeOut(pi_group_display_pi)) # Fade out the final pi value group
+        self.wait(1) # Pause between sections
+
+
+        # --- Start Scene 5: LogicpediaOutro (from outro.py) ---
+        logo = ImageMobject("logicpedia_logo.png")
+        logo.scale(1.8)
+        logo.to_edge(UP).shift(DOWN*2)
+
+        line1 = Text("For more such videos,", font="Arial", color=BLACK)
+        line2 = Text("Like & Subscribe to Logicpedia!", font="Arial Bold", color=BLUE)
+
+        text_group = VGroup(line1, line2).arrange(DOWN, buff=0.3)
+        text_group.next_to(logo, DOWN)
+
+        self.play(FadeIn(logo, shift=UP, scale=1.1), run_time=0.8)
+        self.play(Write(line1), run_time=0.6)
+        self.play(Write(line2), run_time=0.6)
+
+        self.wait(1)
+        # End of FullAnimationFlow

@@ -1,112 +1,124 @@
 from manim import *
+import math
+import random
 
-class ShapeExample(Scene):
+config.background_color = WHITE
+
+class ProbabilityLineSegment(Scene):
     def construct(self):
-        circle = Circle().set_color(BLUE)
-        square = Square().set_color(RED).shift(RIGHT * 2)
+        radius = 3
+        line = NumberLine(x_range=[-radius, radius], length=2 * radius, include_ticks=True)
+        line.set_color(BLACK)
 
-        self.play(Create(circle))
+        target_segment = Line(start=line.n2p(-1), end=line.n2p(1), color=BLUE, stroke_width=8)
+        target_segment.set_z_index(1)
+
+        counter_tex = MathTex(r"\frac{0}{0}", font_size=36, color=BLACK).to_corner(UL, buff=0.8)
+        prob_value = DecimalNumber(0, num_decimal_places=3, include_sign=False, color=BLACK)
+        prob_label = MathTex(r"P =", font_size=36, color=BLACK)
+        prob_group = VGroup(prob_label, prob_value).arrange(RIGHT, buff=0.1).to_corner(UR, buff=0.8)
+
+        dot_radius = 0.04
+        total_points = 10
+        dot_radius_small = 0.02
+        batch_size = 5
+
+        inner_color = GREEN
+        outer_color = BLACK
+        border_offset = 0.005
+
+        self.add(line, target_segment, counter_tex, prob_group)
+
+        inside_count = 0
+        total_count = 0
+        temp_batch = []
+
+        for i in range(1, total_points + 1):
+            x = random.uniform(-radius, radius)
+            pt = [x, 0, 0]
+
+            if -1 <= x <= 1:
+                inside_count += 1
+                dot_color = inner_color
+            else:
+                dot_color = RED
+
+            outer = Dot(pt, color=outer_color, radius=dot_radius + border_offset)
+            inner = Dot(pt, color=dot_color, radius=dot_radius)
+            dot = VGroup(outer, inner)
+
+            temp_batch.append(dot)
+            total_count += 1
+            est_prob = inside_count / total_count
+
+            counter_tex.become(MathTex(rf"\frac{{{inside_count}}}{{{total_count}}}", font_size=36, color=BLACK).to_corner(UL, buff=0.8))
+            prob_value.set_value(est_prob)
+
+            if len(temp_batch) == batch_size or i == total_points:
+                self.add(*temp_batch)
+                self.wait(0.01)
+                temp_batch = []
+
+
+class ProbabilitySquare(Scene):
+    def construct(self):
+        side_length = 3
+        inner_side = 1
+        square = Square(side_length=side_length, color=BLACK).shift(DOWN * 0.5)
+        inner_square = Square(side_length=inner_side, color=BLUE, fill_opacity=0.5).move_to(square.get_center())
+
+        frac_counter3 = MathTex(r"\frac{0}{0}", font_size=36, color=BLACK).to_corner(UL, buff=0.8)
+        prob_value3 = DecimalNumber(0, num_decimal_places=3, include_sign=False, color=BLACK)
+        prob_label3 = MathTex(r"P =", font_size=36, color=BLACK)
+        prob_group3 = VGroup(prob_label3, prob_value3).arrange(RIGHT, buff=0.1).to_corner(UR, buff=0.8)
+
+        dot_radius_small = 0.02
+        total_points3 = 10
+        batch_size_square = 5
+        border_offset3 = 0.005
+
+        self.add(square, inner_square, frac_counter3, prob_group3)
+
+        half_side = side_length / 2
+        inside_count3 = 0
+        total_count3 = 0
+        temp_batch = []
+        dots_group = VGroup()
+
+        for i in range(1, total_points3 + 1):
+            x = random.uniform(-half_side, half_side)
+            y = random.uniform(-half_side, half_side)
+            pt = [x, y, 0]
+
+            if -inner_side / 2 <= x <= inner_side / 2 and -inner_side / 2 <= y <= inner_side / 2:
+                inside_count3 += 1
+                inner_color = GREEN
+            else:
+                inner_color = RED
+
+            outer = Dot(pt, color=BLACK, radius=dot_radius_small + border_offset3)
+            inner = Dot(pt, color=inner_color, radius=dot_radius_small)
+            dot = VGroup(outer, inner)
+            dots_group.add(dot)
+
+            total_count3 += 1
+            est_prob3 = inside_count3 / total_count3
+
+            frac_counter3.become(
+                MathTex(
+                    rf"\frac{{{inside_count3}}}{{{total_count3}}}",
+                    font_size=36,
+                    color=BLACK
+                ).to_corner(UL, buff=0.8)
+            )
+            prob_value3.set_value(est_prob3)
+
+            temp_batch.append(dot)
+
+            if len(temp_batch) == batch_size_square or i == total_points3:
+                self.add(*temp_batch)
+                self.wait(0.01)
+                temp_batch = []
+
+        self.add(dots_group)
         self.wait(1)
-        self.play(Transform(circle, square))
-        self.wait(1)
-        self.play(FadeOut(circle))
-
-
-class StyledText(Scene):
-    def construct(self):
-        text = Text("Styled Text", font_size=72, color=YELLOW)
-        text.move_to(UP)  # move the text upward
-        self.play(FadeIn(text))
-        self.wait(1)
-
-from manim import *
-
-class SimpleNeuralNetwork(Scene):
-    def construct(self):
-        # Define layer structure
-        layer_sizes = [2, 4, 4, 1]
-        layers = []
-
-        # X distance between layers
-        layer_spacing = 2.5
-
-        # Draw neurons as circles in each layer
-        for i, layer_size in enumerate(layer_sizes):
-            layer = VGroup()
-            for j in range(layer_size):
-                neuron = Circle(radius=0.2, color=BLUE)
-                neuron.move_to(RIGHT * i * layer_spacing + UP * (j - layer_size / 2 + 0.5))
-                layer.add(neuron)
-            layers.append(layer)
-
-        # Add all neurons to the scene
-        for layer in layers:
-            self.add(layer)
-
-        # Connect layers with lines
-        for i in range(len(layers) - 1):
-            for neuron1 in layers[i]:
-                for neuron2 in layers[i + 1]:
-                    line = Line(neuron1.get_right(), neuron2.get_left(), stroke_color=GREY, stroke_opacity=0.5)
-                    self.add(line)
-
-        # Optional: Add layer labels
-        input_label = Text("Input Layer").next_to(layers[0], DOWN)
-        hidden1_label = Text("Hidden Layer 1").next_to(layers[1], DOWN)
-        hidden2_label = Text("Hidden Layer 2").next_to(layers[2], DOWN)
-        output_label = Text("Output Layer").next_to(layers[3], DOWN)
-
-        self.add(input_label, hidden1_label, hidden2_label, output_label)
-
-        self.wait(3)
-
-
-
-
-from manim import *
-
-class AnimatedNeuralNetwork(Scene):
-    def construct(self):
-        layer_sizes = [2, 4, 4, 1]
-        layers = []
-        layer_spacing = 2.5
-
-        # 1. Create neurons layer by layer
-        for i, size in enumerate(layer_sizes):
-            layer = VGroup()
-            for j in range(size):
-                neuron = Circle(radius=0.2, color=BLUE)
-                neuron.move_to(RIGHT * i * layer_spacing + UP * (j - size / 2 + 0.5))
-                layer.add(neuron)
-            layers.append(layer)
-
-        # 2. Group entire network and shift left
-        network = VGroup(*layers)
-        network.shift(LEFT * 4)
-
-        # 3. Animate neurons
-        for layer in layers:
-            for neuron in layer:
-                self.play(Create(neuron), run_time=0.2)
-
-        # 4. Animate connections
-        for i in range(len(layers) - 1):
-            for neuron1 in layers[i]:
-                for neuron2 in layers[i + 1]:
-                    line = Line(
-                        neuron1.get_right(), neuron2.get_left(),
-                        stroke_color=GREY, stroke_opacity=0.5
-                    )
-                    self.play(GrowFromCenter(line), run_time=0.05)
-                    self.add(line)
-
-        # 5. Add and animate labels with font size
-        input_label = Text("Input Layer", font_size=20).next_to(layers[0], DOWN)
-        hidden1_label = Text("Hidden Layer 1", font_size=20).next_to(layers[1], DOWN)
-        hidden2_label = Text("Hidden Layer 2", font_size=20).next_to(layers[2], DOWN)
-        output_label = Text("Output Layer", font_size=20).next_to(layers[3], DOWN)
-
-        for label in [input_label, hidden1_label, hidden2_label, output_label]:
-            self.play(FadeIn(label), run_time=0.3)
-
-        self.wait(2)
